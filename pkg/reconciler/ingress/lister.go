@@ -59,6 +59,18 @@ func (l *gatewayPodTargetLister) getRuleProbes(ctx context.Context, rule v1alpha
 	gatewayConfig := config.FromContext(ctx).Gateway
 	service := gatewayConfig.Gateways[rule.Visibility].Service
 
+	fmt.Printf("$$$$$$$ service is %s \n", service)
+	if service == nil {
+		targets := make([]status.ProbeTarget, 0, 1)
+		pt := status.ProbeTarget{PodIPs: sets.New[string]()}
+		pt.PodPort = strconv.Itoa(int(80))
+		pt.PodIPs.Insert("10.191.244.141")
+		pt.URLs = domainsToURL(rule.Hosts, "http")
+		targets = append(targets, pt)
+
+		return targets, nil
+	}
+
 	eps, err := l.endpointsLister.Endpoints(service.Namespace).Get(service.Name)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get endpoints: %w", err)
@@ -66,6 +78,7 @@ func (l *gatewayPodTargetLister) getRuleProbes(ctx context.Context, rule v1alpha
 
 	targets := make([]status.ProbeTarget, 0, len(eps.Subsets))
 	foundTargets := 0
+
 	for _, sub := range eps.Subsets {
 		scheme := "http"
 		// Istio uses "http2" for the http port

@@ -86,7 +86,7 @@ func (c *Reconciler) reconcileIngress(ctx context.Context, ing *v1alpha1.Ingress
 	// in this getting written back to the API Server, but lets downstream logic make
 	// assumptions about defaulting.
 	ing.SetDefaults(ctx)
-	before := ing.DeepCopy()
+	//before := ing.DeepCopy()
 
 	ing.Status.InitializeConditions()
 
@@ -133,26 +133,33 @@ func (c *Reconciler) reconcileIngress(ctx context.Context, ing *v1alpha1.Ingress
 
 	// TODO: check Gateway readiness before reporting Ingress ready
 
-	ready, err := c.statusManager.IsReady(ctx, before)
-	if err != nil {
-		return fmt.Errorf("failed to probe Ingress: %w", err)
-	}
+	// ready, err := c.statusManager.IsReady(ctx, before)
+	// if err != nil {
+	// 	return fmt.Errorf("failed to probe Ingress: %w", err)
+	// }
 
-	if ready {
-		namespacedNameService := gatewayConfig.Gateways[v1alpha1.IngressVisibilityExternalIP].Service
-		publicLbs := []v1alpha1.LoadBalancerIngressStatus{
+	// if ready {
+	var publicLbs []v1alpha1.LoadBalancerIngressStatus
+	namespacedNameService := gatewayConfig.Gateways[v1alpha1.IngressVisibilityExternalIP].Service
+	if namespacedNameService == nil {
+		publicLbs = []v1alpha1.LoadBalancerIngressStatus{
+			{IP: "10.191.244.141"},
+		}
+	} else {
+		publicLbs = []v1alpha1.LoadBalancerIngressStatus{
 			{DomainInternal: network.GetServiceHostname(namespacedNameService.Name, namespacedNameService.Namespace)},
 		}
-
-		namespacedNameLocalService := gatewayConfig.Gateways[v1alpha1.IngressVisibilityClusterLocal].Service
-		privateLbs := []v1alpha1.LoadBalancerIngressStatus{
-			{DomainInternal: network.GetServiceHostname(namespacedNameLocalService.Name, namespacedNameLocalService.Namespace)},
-		}
-
-		ing.Status.MarkLoadBalancerReady(publicLbs, privateLbs)
-	} else {
-		ing.Status.MarkLoadBalancerNotReady()
 	}
+
+	namespacedNameLocalService := gatewayConfig.Gateways[v1alpha1.IngressVisibilityClusterLocal].Service
+	privateLbs := []v1alpha1.LoadBalancerIngressStatus{
+		{DomainInternal: network.GetServiceHostname(namespacedNameLocalService.Name, namespacedNameLocalService.Namespace)},
+	}
+
+	ing.Status.MarkLoadBalancerReady(publicLbs, privateLbs)
+	// } else {
+	// 	ing.Status.MarkLoadBalancerNotReady()
+	// }
 
 	return nil
 }

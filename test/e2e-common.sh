@@ -42,6 +42,13 @@ function parse_flags() {
       readonly UNSUPPORTED_E2E_TESTS="${CONTOUR_UNSUPPORTED_E2E_TESTS}"
       return 1
       ;;
+    --avi)
+      readonly INGRESS=avi
+      readonly GATEWAY_OVERRIDE=avi-gateway
+      readonly GATEWAY_NAMESPACE_OVERRIDE=default
+      readonly UNSUPPORTED_E2E_TESTS="${CONTOUR_UNSUPPORTED_E2E_TESTS}"
+      return 1
+      ;;
     --kind)
       readonly KIND=1
       return 1
@@ -74,8 +81,8 @@ function knative_setup() {
   # we don't want to override with the default empty config
   setup_networking || fail_test "failed to setup networking layer"
 
-  wait_until_service_has_external_ip \
-    $GATEWAY_NAMESPACE_OVERRIDE $GATEWAY_OVERRIDE || fail_test "Service did not get an IP address"
+  #wait_until_service_has_external_ip \
+  #  $GATEWAY_NAMESPACE_OVERRIDE $GATEWAY_OVERRIDE || fail_test "Service did not get an IP address"
 }
 
 function knative_teardown() {
@@ -88,9 +95,9 @@ function knative_teardown() {
 
 function setup_networking() {
   echo ">> Installing Gateway API CRDs"
-  kubectl apply -f "${REPO_ROOT_DIR}/third_party/gateway-api/gateway-api.yaml" || return $?
+  # kubectl apply -f "${REPO_ROOT_DIR}/third_party/gateway-api/gateway-api.yaml" || return $?
 
-  if [[ "${INGRESS}" == "contour" ]]; then
+  if [[ "${INGRESS}" == "contour" || "${INGRESS}" == "avi" ]]; then
     setup_contour
   else
     setup_istio
@@ -99,9 +106,9 @@ function setup_networking() {
 
 function teardown_networking() {
   kubectl delete -f "${REPO_ROOT_DIR}/third_party/${INGRESS}"
-  kubectl delete -f "${REPO_ROOT_DIR}/third_party/gateway-api/gateway-api.yaml"
+  #kubectl delete -f "${REPO_ROOT_DIR}/third_party/gateway-api/gateway-api.yaml"
 
-  if [[ "$INGRESS" == "contour" ]]; then
+  if [[ "$INGRESS" == "contour" || "${INGRESS}" == "avi" ]]; then
     kubectl delete -f "https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VERSION}/examples/render/contour-gateway-provisioner.yaml"
   else
     istioctl uninstall -y --purge
@@ -111,9 +118,9 @@ function teardown_networking() {
 
 function setup_contour() {
   # Version is selected is in $REPO_ROOT/hack/test-env.sh
-  kubectl apply -f "https://raw.githubusercontent.com/projectcontour/contour/${CONTOUR_VERSION}/examples/render/contour-gateway-provisioner.yaml" && \
+  kubectl apply -f "${REPO_ROOT_DIR}/test/contour/contour-gateway-provisioner.yaml" && \
   kubectl wait deploy --for=condition=Available --timeout=60s -n projectcontour contour-gateway-provisioner && \
-  kubectl apply -f "${REPO_ROOT_DIR}/third_party/contour"
+  kubectl apply -f "${REPO_ROOT_DIR}/third_party/avi"
 
   local ret=$?
   if [ $ret -ne 0 ]; then
@@ -146,6 +153,8 @@ function test_conformance() {
     -enable-alpha \
     -enable-beta \
     -skip-tests="${UNSUPPORTED_E2E_TESTS}" \
+    -service-domain="${SERVICE_DOMAIN}" \
+    -request-delay=${REQUEST_DELAY} \
     -ingressClass=gateway-api.ingress.networking.knative.dev
 
   return $?

@@ -1,0 +1,19 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: config-gateway
+  namespace: knative-serving
+  labels:
+    networking.knative.dev/ingress-provider: net-gateway-api
+    app.kubernetes.io/component: net-gateway-api
+    app.kubernetes.io/name: knative-serving
+    app.kubernetes.io/version: devel
+data:
+  visibility: |
+    ExternalIP:
+      class: avi-lb
+      gateway: avi-system/avi-gateway
+    ClusterLocal:
+      class: contour
+      gateway: contour-internal/knative-local-gateway
+      service: contour-internal/envoy-knative-local-gateway
