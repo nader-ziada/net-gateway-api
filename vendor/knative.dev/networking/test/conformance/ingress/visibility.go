@@ -165,7 +165,7 @@ func TestVisibilitySplit(t *testing.T) {
 	})
 
 	// Ensure we can't connect to the private resources
-	RuntimeRequestWithExpectations(ctx, t, client, "http://"+privateHostName, []ResponseExpectation{StatusCodeExpectation(sets.New(http.StatusNotFound))}, true)
+	RuntimeRequestWithExpectations(ctx, t, client, "http://"+privateHostName, []ResponseExpectation{StatusCodeExpectation(sets.New(http.StatusNotFound, http.StatusInternalServerError))}, true)
 
 	loadbalancerAddress := localIngress.Status.PrivateLoadBalancer.Ingress[0].DomainInternal
 	proxyName, proxyPort, _ := CreateProxyService(ctx, t, clients, privateHostName, loadbalancerAddress)
@@ -328,7 +328,7 @@ func TestVisibilityPath(t *testing.T) {
 
 	// Ensure we can't connect to the private resources
 	for _, path := range []string{"", "/foo", "/bar", "/baz"} {
-		RuntimeRequestWithExpectations(ctx, t, client, "http://"+privateHostName+path, []ResponseExpectation{StatusCodeExpectation(sets.New(http.StatusNotFound))}, true)
+		RuntimeRequestWithExpectations(ctx, t, client, "http://"+privateHostName+path, []ResponseExpectation{StatusCodeExpectation(sets.New(http.StatusNotFound, http.StatusInternalServerError))}, true)
 	}
 
 	loadbalancerAddress := localIngress.Status.PrivateLoadBalancer.Ingress[0].DomainInternal
