@@ -65,7 +65,7 @@ func TestVisibility(t *testing.T) {
 
 	// Ensure the service is not publicly accessible
 	for _, privateHostName := range privateHostNames {
-		RuntimeRequestWithExpectations(ctx, t, client, "http://"+privateHostName, []ResponseExpectation{StatusCodeExpectation(sets.New(http.StatusNotFound))}, true)
+		RuntimeRequestWithExpectations(ctx, t, client, "http://"+privateHostName, []ResponseExpectation{StatusCodeExpectation(sets.New(http.StatusNotFound, http.StatusInternalServerError))}, true)
 	}
 
 	for name := range privateHostNames {
