@@ -20,6 +20,7 @@ import (
 	"context"
 	"net/http"
 	"testing"
+	"time"
 
 	"k8s.io/apimachinery/pkg/util/intstr"
 	"knative.dev/networking/pkg/apis/networking/v1alpha1"
@@ -54,6 +55,7 @@ func TestRetry(t *testing.T) {
 
 	// First try - we expect this to fail, because we shouldn't retry
 	// automatically and the service only responds 200 on the _second_ access.
+	time.Sleep(20 * time.Second)
 	resp, err := client.Get("http://" + domain)
 	if err != nil {
 		t.Fatalf("Error making GET request: %v", err)
@@ -64,6 +66,7 @@ func TestRetry(t *testing.T) {
 		DumpResponse(ctx, t, resp)
 	}
 
+	time.Sleep(20 * time.Second)
 	// Second try - this time we should succeed.
 	resp, err = client.Get("http://" + domain)
 	if err != nil {

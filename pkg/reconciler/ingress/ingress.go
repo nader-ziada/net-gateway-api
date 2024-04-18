@@ -143,7 +143,7 @@ func (c *Reconciler) reconcileIngress(ctx context.Context, ing *v1alpha1.Ingress
 	namespacedNameService := gatewayConfig.Gateways[v1alpha1.IngressVisibilityExternalIP].Service
 	if namespacedNameService == nil {
 		publicLbs = []v1alpha1.LoadBalancerIngressStatus{
-			{IP: "10.191.244.141"},
+			{IP: "10.180.119.112"},
 		}
 	} else {
 		publicLbs = []v1alpha1.LoadBalancerIngressStatus{

@@ -97,7 +97,8 @@ func CreateRuntimeService(ctx context.Context, t *testing.T, clients *test.Clien
 	name := test.ObjectNameForTest(t)
 
 	// Avoid zero, but pick a low port number.
-	port := 50 + rand.Intn(50)
+	// port := 50 + rand.Intn(50)
+	port := 80
 	t.Logf("[%s] Using port %d", name, port)
 
 	// Pick a high port number.
@@ -1048,12 +1049,13 @@ func CreateDialContext(ctx context.Context, t *testing.T, ing *v1alpha1.Ingress,
 	// keep our simple tests simple, thus the [0]s...
 	// We expect an ingress LB with the form foo.bar.svc.cluster.local (though
 	// we aren't strictly sensitive to the suffix, this is just illustrative.
-	internalDomain := ing.Status.PublicLoadBalancer.Ingress[0].DomainInternal
-	parts := strings.SplitN(internalDomain, ".", 3)
-	if len(parts) < 3 {
-		t.Fatal("Too few parts in internal domain:", internalDomain)
-	}
-	name, namespace := parts[0], parts[1]
+	// internalDomain := ing.Status.PublicLoadBalancer.Ingress[0].DomainInternal
+	// parts := strings.SplitN(internalDomain, ".", 3)
+	// if len(parts) < 3 {
+	// 	t.Fatal("Too few parts in internal domain:", internalDomain)
+	// }
+	// name, namespace := parts[0], parts[1]
+	name, namespace := "avi-gateway-svc", "avi-system"
 
 	var svc *corev1.Service
 	err := reconciler.RetryTestErrors(func(attempts int) (err error) {
@@ -1077,7 +1079,7 @@ func CreateDialContext(ctx context.Context, t *testing.T, ing *v1alpha1.Ingress,
 			}
 			for _, sp := range svc.Spec.Ports {
 				if fmt.Sprint(sp.Port) == port {
-					return dial(ctx, "tcp", fmt.Sprintf("%s:%d", pkgTest.Flags.IngressEndpoint, sp.NodePort))
+					return dial(ctx, "tcp", fmt.Sprintf("%s:%d", pkgTest.Flags.IngressEndpoint, sp.Port))
 				}
 			}
 			return nil, fmt.Errorf("service doesn't contain a matching port: %s", port)

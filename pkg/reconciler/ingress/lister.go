@@ -64,7 +64,7 @@ func (l *gatewayPodTargetLister) getRuleProbes(ctx context.Context, rule v1alpha
 		targets := make([]status.ProbeTarget, 0, 1)
 		pt := status.ProbeTarget{PodIPs: sets.New[string]()}
 		pt.PodPort = strconv.Itoa(int(80))
-		pt.PodIPs.Insert("10.191.244.141")
+		pt.PodIPs.Insert("10.180.119.112")
 		pt.URLs = domainsToURL(rule.Hosts, "http")
 		targets = append(targets, pt)
 
